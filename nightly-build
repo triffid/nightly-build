@@ -1,0 +1,111 @@
+#!/bin/bash
+
+##############################################################################
+#                                                                            #
+# Nightly Build Script                                                       #
+#                                                                            #
+# Copyright (c) 2013 Triffid Hunter                                          #
+#                                                                            #
+# This program is free software; you can redistribute it and/or modify       #
+# it under the terms of the GNU General Public License as published by       #
+# the Free Software Foundation; either version 2 of the License, or          #
+# (at your option) any later version.                                        #
+#                                                                            #
+# This program is distributed in the hope that it will be useful,            #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of             #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              #
+# GNU General Public License for more details.                               #
+#                                                                            #
+# You should have received a copy of the GNU General Public License          #
+# along with this program; if not, write to the Free Software                #
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA #
+#                                                                            #
+##############################################################################
+
+
+REPO=$1
+shift
+
+OUT=$1
+shift
+
+if [ -z "$REPO" ] || [ -z "$OUT" ]
+then
+	cat <<ENDHELP
+Usage: ${0##*/} </path/to/git/repository> </path/to/output/file.html> [<build output file(s)>...]
+
+Example:
+	${0##*/} ~/MyRepository ~/public_html/MyProject-nightly.html File1 File2.gen File3.txt
+
+ENDHELP
+exit 0
+fi
+
+export PATH=/usr/local/bin:/usr/bin:/bin:/opt/bin:/usr/x86_64-pc-linux-gnu/gcc-bin/4.7.3:/usr/x86_64-pc-linux-gnu/avr/gcc-bin/4.5.2:/home/triffid/bin:/home/triffid/gcc-arm-none-eabi/bin
+
+pushd "$REPO" &>/dev/null
+
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+DESC="$(git log -n 1)"
+
+git fetch origin
+
+# set N=1 for testing
+#N=1
+# set N="$(git rev-list HEAD...origin/$BRANCH --count)" for normal use
+N="$(git rev-list HEAD...origin/$BRANCH --count)"
+
+VERSION=$(git symbolic-ref HEAD 2> /dev/null | cut -b 12-)-$(git log --pretty=format:%h -1)
+DATE=$(date -u '+%A %d %B %Y %R %Z')
+
+if [ "$N" -gt 0 ]
+then
+  echo -n Updating $REPO...
+	git clean -f -d -X &>/dev/null
+	MERGE=$(git merge --ff-only origin/$BRANCH)
+	popd &>/dev/null
+		cat <<ENDOC > $OUT
+<!DOCTYPE html5>
+<html>
+<head
+<meta charset="UTF-8">
+<title>${REPO##*/} Nightly Builds</title>
+</head>
+<body>
+<h1>${REPO##*/} Nightly Builds</h1>
+<strong>Latest Build:</strong> $VERSION<br>
+<strong>Build Date:</strong> $DATE<br>
+<strong>Commit:</strong><pre>$DESC</pre><br>
+<strong>Results:</strong>
+<pre>$MERGE</pre>
+ENDOC
+
+	pushd "$REPO" &>/dev/null
+	( time make ) &> buildlog.txt
+	R=$?
+	popd &>/dev/null
+	if [ "$R" -eq 0 ]
+	then
+		echo '<ul>' >> $OUT
+		# TODO: discover output files
+		for OF in "$@"
+		do
+			echo '	<li><a href="'"$OF"'">'"$OF"'</a></li>' >> $OUT
+		done
+		echo '</ul>' >> $OUT
+	else
+		cat <<ENDOC3 >> $OUT
+<strong style="color:#00A">Build Failed!</strong>
+ENDOC3
+	fi
+	cat <<ENDOC4 >> $OUT
+<textarea style="width: 95%; height: 100%;" readonly="readonly">$(sed -e 's/</\&lt;/g; s/>/\&gt;/g' "$REPO/buildlog.txt")</textarea>
+</body>
+</html>
+ENDOC4
+	echo " OK," $VERSION $DATE
+else
+	echo No new commits. $VERSION $DATE
+fi
+exit 0
