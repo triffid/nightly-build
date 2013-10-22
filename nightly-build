@@ -32,7 +32,7 @@ shift
 OUT=$1
 shift
 
-if [ -z "$REPO" ] || [ -z "$OUT" ]
+if [ -z "$REPO" ] || [ -z "$BRANCH" ] || [ -z "$OUT" ]
 then
 	cat <<ENDHELP
 Usage: ${0##*/} </path/to/git/repository> <branch> </path/to/output/file.html> [<build output file(s)>...]
