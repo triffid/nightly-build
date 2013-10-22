@@ -26,13 +26,16 @@
 REPO=$1
 shift
 
+BRANCH=$1
+shift
+
 OUT=$1
 shift
 
 if [ -z "$REPO" ] || [ -z "$OUT" ]
 then
 	cat <<ENDHELP
-Usage: ${0##*/} </path/to/git/repository> </path/to/output/file.html> [<build output file(s)>...]
+Usage: ${0##*/} </path/to/git/repository> <branch> </path/to/output/file.html> [<build output file(s)>...]
 
 Example:
 	${0##*/} ~/MyRepository ~/public_html/MyProject-nightly.html File1 File2.gen File3.txt
@@ -45,7 +48,7 @@ export PATH=/usr/local/bin:/usr/bin:/bin:/opt/bin:/usr/x86_64-pc-linux-gnu/gcc-b
 
 pushd "$REPO" &>/dev/null
 
-BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+#BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
 DESC="$(git log -n 1)"
 
