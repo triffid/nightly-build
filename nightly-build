@@ -22,6 +22,11 @@
 #                                                                            #
 ##############################################################################
 
+if [ "$1" == "-f" ] || [ "$1" == "--force" ]
+then
+	FORCE=true
+	shift
+fi
 
 REPO=$1
 shift
@@ -35,7 +40,7 @@ shift
 if [ -z "$REPO" ] || [ -z "$BRANCH" ] || [ -z "$OUT" ]
 then
 	cat <<ENDHELP
-Usage: ${0##*/} </path/to/git/repository> <branch> </path/to/output/file.html> [<build output file(s)>...]
+Usage: ${0##*/} [-f|--force] </path/to/git/repository> <branch> </path/to/output/file.html> [<build output file(s)>...]
 
 Example:
 	${0##*/} ~/MyRepository ~/public_html/MyProject-nightly.html File1 File2.gen File3.txt
@@ -54,10 +59,12 @@ DESC="$(git log -n 1)"
 
 git fetch origin
 
-# set N=1 for testing
-#N=1
-# set N="$(git rev-list HEAD...origin/$BRANCH --count)" for normal use
-N="$(git rev-list HEAD...origin/$BRANCH --count)"
+if [ -n "$FORCE" ]
+then
+	N=1
+else
+	N="$(git rev-list HEAD...origin/$BRANCH --count)"
+fi
 
 VERSION=$(git symbolic-ref HEAD 2> /dev/null | cut -b 12-)-$(git log --pretty=format:%h -1)
 DATE=$(date -u '+%A %d %B %Y %R %Z')
