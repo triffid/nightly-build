@@ -71,6 +71,7 @@ if [ "$N" -gt 0 ]
 then
   echo -n Updating $REPO...
 	git clean -f -d -X &>/dev/null
+	git checkout "$BRANCH"
 	MERGE=$(git merge --ff-only origin/$BRANCH)
 	popd &>/dev/null
 		cat <<ENDOC > $OUT
