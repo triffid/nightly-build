@@ -28,13 +28,13 @@ then
 	shift
 fi
 
-REPO=$1
+REPO="$1"
 shift
 
-BRANCH=$1
+BRANCH="$1"
 shift
 
-OUT=$1
+OUT="$1"
 shift
 
 if [ -z "$REPO" ] || [ -z "$BRANCH" ] || [ -z "$OUT" ]
@@ -69,12 +69,12 @@ DATE=$(date -u '+%A %d %B %Y %R %Z')
 
 if [ "$N" -gt 0 ]
 then
-  echo -n Updating $REPO...
+  echo -n Updating "$REPO"...
 	git clean -f -d -X &>/dev/null
 	git checkout "$BRANCH"
-	MERGE=$(git merge --ff-only origin/$BRANCH)
+	MERGE=$(git merge --ff-only origin/"$BRANCH")
 	popd &>/dev/null
-		cat <<ENDOC > $OUT
+		cat <<ENDOC > "$OUT"
 <!DOCTYPE html5>
 <html>
 <head
@@ -96,25 +96,25 @@ ENDOC
 	popd &>/dev/null
 	if [ "$R" -eq 0 ]
 	then
-		echo '<ul>' >> $OUT
+		echo '<ul>' >> "$OUT"
 		# TODO: discover output files
 		for OF in "$@"
 		do
-			echo '	<li><a href="'"$OF"'">'"$OF"'</a></li>' >> $OUT
+			echo '	<li><a href="'"$OF"'">'"$OF"'</a></li>' >> "$OUT"
 		done
-		echo '</ul>' >> $OUT
+		echo '</ul>' >> "$OUT"
 	else
-		cat <<ENDOC3 >> $OUT
+		cat <<ENDOC3 >> "$OUT"
 <strong style="color:#00A">Build Failed!</strong>
 ENDOC3
 	fi
-	cat <<ENDOC4 >> $OUT
+	cat <<ENDOC4 >> "$OUT"
 <textarea style="width: 95%; height: 100%;" readonly="readonly">$(sed -e 's/</\&lt;/g; s/>/\&gt;/g' "$REPO/buildlog.txt")</textarea>
 </body>
 </html>
 ENDOC4
-	echo " OK," $VERSION $DATE
+	echo " OK," "$VERSION" "$DATE"
 else
-	echo No new commits. $VERSION $DATE
+	echo No new commits. "$VERSION" "$DATE"
 fi
 exit 0
